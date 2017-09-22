@@ -8,6 +8,7 @@
 
 class AVR_MotionController;
 class UCameraComponent;
+class AVR_GrabbableActor;
 
 UCLASS()
 class VR_CODE_API AVR_PlayerPawn : public APawn
@@ -38,6 +39,24 @@ protected:
 	// Sets the axis value for the Right Hand's SkeletalMesh animation for gripping
 	// Set from bound input axis
 	void SetRightHandGripVal(float val);
+
+	UFUNCTION(BlueprintCallable, Category="VR Interaction")
+	void OnRightHandGrab();
+
+	UFUNCTION(BlueprintCallable, Category = "VR Interaction")
+	void OnRightHandRelease();
+
+	UFUNCTION(BlueprintCallable, Category = "VR Interaction")
+	void OnLeftHandGrab();
+
+	UFUNCTION(BlueprintCallable, Category = "VR Interaction")
+	void OnLeftHandRelease();
+
+	// When the right hand interacts with a held object
+	void OnRightInteract();
+
+	// When the left hand interacts with a held object
+	void OnLeftInteract();
 
 public:
 	// The Left Hand (Blueprint overridden) VR_MotionController to spawn
