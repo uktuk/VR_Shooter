@@ -9,7 +9,7 @@ AVR_GrabbableActor::AVR_GrabbableActor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	GrabType = EVR_GrabType::VR_NULL;
+	GrabType = EVR_GrabTypeB::VR_NULL;
 }
 
 // Called when the game starts or when spawned

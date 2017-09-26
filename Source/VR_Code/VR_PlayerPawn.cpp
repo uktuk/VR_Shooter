@@ -5,7 +5,7 @@
 #include "Components/InputComponent.h"
 #include <Camera/CameraComponent.h>
 #include "VR_MotionController.h"
-#include "VR_GrabbableActor.h"
+#include "VR_GrabComponent.h"
 #include <ConstructorHelpers.h>
 
 
@@ -107,10 +107,10 @@ void AVR_PlayerPawn::OnRightHandGrab()
 {
 	if (RightVR_MotionController)
 	{
-		AVR_GrabbableActor* overlappedActor = RightVR_MotionController->CheckOverlappedActor();
-		if (overlappedActor)
+		UVR_GrabComponent* overlappedComponent = RightVR_MotionController->CheckOverlappedComponent();
+		if (overlappedComponent)
 		{
-			RightVR_MotionController->GrabActor(overlappedActor, false);
+			RightVR_MotionController->GrabComponent(overlappedComponent, false);
 		}
 	}
 }
@@ -120,7 +120,7 @@ void AVR_PlayerPawn::OnRightHandRelease()
 {	
 	if (RightVR_MotionController)
 	{
-		RightVR_MotionController->ReleaseActor();
+		RightVR_MotionController->ReleaseComponent();
 	}
 }
 
@@ -129,10 +129,10 @@ void AVR_PlayerPawn::OnLeftHandGrab()
 {
 	if (LeftVR_MotionController)
 	{
-		AVR_GrabbableActor* overlappedActor = LeftVR_MotionController->CheckOverlappedActor();
-		if (overlappedActor)
+		UVR_GrabComponent* overlappedComponent = LeftVR_MotionController->CheckOverlappedComponent();
+		if (overlappedComponent)
 		{
-			LeftVR_MotionController->GrabActor(overlappedActor, true);
+			LeftVR_MotionController->GrabComponent(overlappedComponent, true);
 		}
 	}
 }
@@ -142,22 +142,22 @@ void AVR_PlayerPawn::OnLeftHandRelease()
 {
 	if (LeftVR_MotionController)
 	{
-		LeftVR_MotionController->ReleaseActor();
+		LeftVR_MotionController->ReleaseComponent();
 	}
 }
 
 void AVR_PlayerPawn::OnRightInteract()
 {
-	if (RightVR_MotionController && RightVR_MotionController->HeldActor)
+	if (RightVR_MotionController && RightVR_MotionController->HeldComponent)
 	{
-		RightVR_MotionController->HeldActor->OnInteract();
+		RightVR_MotionController->HeldComponent->OnVRInteract();
 	}
 }
 
 void AVR_PlayerPawn::OnLeftInteract()
 {
-	if (LeftVR_MotionController && LeftVR_MotionController->HeldActor)
+	if (LeftVR_MotionController && LeftVR_MotionController->HeldComponent)
 	{
-		LeftVR_MotionController->HeldActor->OnInteract();
+		LeftVR_MotionController->HeldComponent->OnVRInteract();
 	}
 }

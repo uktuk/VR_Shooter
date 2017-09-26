@@ -6,8 +6,10 @@
 #include "GameFramework/Actor.h"
 #include "VR_GrabbableActor.generated.h"
 
+
+
 UENUM(BlueprintType)
-enum class EVR_GrabType : uint8
+enum class EVR_GrabTypeB : uint8
 {
 	VR_NULL				UMETA(DisplayName="NULL"),					// NULL, GrabType must be specified in object
 	VR_FreeGrab			UMETA(DisplayName = "FreeGrab"),			// Object can be grabbed at any angle/rotation and will maintain world position
@@ -26,7 +28,7 @@ public:
 
 	// How the actor should be handled in regards to attachment and movement of the actor
 	UPROPERTY(EditDefaultsOnly, Category = "VR Interaction")
-	EVR_GrabType GrabType;
+	EVR_GrabTypeB GrabType;
 
 	// Virtual function called on interaction of the actor (if not blueprint overridden, _Implementation version will be called in code)
 	UFUNCTION(BlueprintNativeEvent, Category="VR Interaction")
@@ -41,7 +43,7 @@ public:
 	// Virtual function called upon release of the actor (if not blueprint overridden, _Implementation version will be called in code)
 	UFUNCTION(BlueprintNativeEvent, Category = "VR Interaction")
 	void OnReleased();
-	virtual void OnReleased_Implementation();
+	virtual void OnReleased_Implementation();	
 
 protected:
 	// Called when the game starts or when spawned
@@ -49,5 +51,7 @@ protected:
 
 public:	
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;	
+	virtual void Tick(float DeltaTime) override;
+
+
 };

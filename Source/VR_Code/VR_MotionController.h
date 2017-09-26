@@ -3,7 +3,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "VR_GrabbableActor.h"
+#include "VR_GrabComponent.h"
 #include "VR_MotionController.generated.h"
 
 class UMotionControllerComponent;
@@ -35,14 +35,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "VR MotionControllers")
 	void SetHandAxisVal(float val);
 
-	// Check if motion controller is overlapping a grabbable actor
-	AVR_GrabbableActor* CheckOverlappedActor();
+	// Check if motion controller is overlapping a grabbable component
+	UFUNCTION(BlueprintCallable, Category="VR Interaction")
+	UVR_GrabComponent* CheckOverlappedComponent();
 
-	// Attempt to grab actor (specify if left hand for correct socket snapping)
-	void GrabActor(AVR_GrabbableActor* ActorToGrab, bool isLeftHand);
+	// Attempt to grab a VR_GrabComponent (specify if left hand for correct socket snapping)
+	void GrabComponent(UVR_GrabComponent* ComponentToGrab, bool isLeftHand);
 
-	// Attempt to release held actor
-	void ReleaseActor();
+	// Attempt to release held VR_GrabComponent
+	void ReleaseComponent();
 
 public:
 	// Skeletal Mesh for the hand
@@ -51,7 +52,7 @@ public:
 
 	// The current actor held in the hand
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VR Interaction")
-	AVR_GrabbableActor* HeldActor;
+	UVR_GrabComponent* HeldComponent;
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Default")

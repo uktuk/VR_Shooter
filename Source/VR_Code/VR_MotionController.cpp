@@ -6,7 +6,7 @@
 #include <Runtime/Engine/Classes/Components/SkeletalMeshComponent.h>
 #include <Runtime/Engine/Classes/Components/SphereComponent.h>
 #include "HandAnimInstance.h"
-#include "VR_GrabbableActor.h"
+#include "VR_GrabComponent.h"
 
 
 // Sets default values
@@ -17,22 +17,20 @@ AVR_MotionController::AVR_MotionController()
 
 	// Create SceneComponent as root so the child components will translate relative to parent actor
 	VROrigin = CreateDefaultSubobject<USceneComponent>("SceneComponent");
-	// RootComponent = VROrigin;
 
 	// Create the MotionControllerComponents and attach to Root (this is what tracks the motion controllers)
-	MotionController = CreateDefaultSubobject<UMotionControllerComponent>("MotionController");	
-	// MotionController->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);	
+	MotionController = CreateDefaultSubobject<UMotionControllerComponent>("MotionController");
 	RootComponent = MotionController;
 
 	// Creates Left Hand mesh
 	HandMesh = CreateDefaultSubobject<USkeletalMeshComponent>("HandMesh");
-	HandMesh->AttachToComponent(MotionController, FAttachmentTransformRules::KeepRelativeTransform);		
+	HandMesh->AttachToComponent(MotionController, FAttachmentTransformRules::KeepRelativeTransform);
 	
 	// Setup collision sphere
 	SphereComponent = CreateDefaultSubobject<USphereComponent>("SphereComponent");
 	SphereComponent->AttachToComponent(MotionController, FAttachmentTransformRules::KeepRelativeTransform);
 	
-	HeldActor = nullptr;	
+	HeldComponent = nullptr;
 }
 
 // Called when the game starts or when spawned
@@ -71,67 +69,81 @@ void AVR_MotionController::SetHandAxisVal(float val)
 	}	
 }
 
-AVR_GrabbableActor* AVR_MotionController::CheckOverlappedActor()
+UVR_GrabComponent* AVR_MotionController::CheckOverlappedComponent()
 {
 	// Check if SphereComponent is overlapping any grabbable actors
-	TArray<AActor*> overlappedActors;	
-	SphereComponent->GetOverlappingActors(overlappedActors, AVR_GrabbableActor::StaticClass());
-	if (overlappedActors.Num() > 0)
-	{
-		// TODO:: return overlapped actors in order of distance from hand
-		AVR_GrabbableActor* grabbedActor = Cast<AVR_GrabbableActor>(overlappedActors[0]);
-		if (grabbedActor)
+	TArray<UPrimitiveComponent*> overlappingComponents;
+	SphereComponent->GetOverlappingComponents(overlappingComponents);
+
+	UVR_GrabComponent* closestGrabComponent = nullptr;
+
+	for (int i = 0; i < overlappingComponents.Num(); ++i)
+	{	
+		UVR_GrabComponent* overlappingGrabComponent = Cast<UVR_GrabComponent>(overlappingComponents[i]);
+		if (overlappingGrabComponent)
 		{
-			return grabbedActor;
+			// Get closest overlapping grab component
+			if (closestGrabComponent == nullptr ||
+				(FVector::DistSquared(SphereComponent->GetComponentLocation(), overlappingGrabComponent->GetComponentLocation()) < FVector::DistSquared(SphereComponent->GetComponentLocation(), closestGrabComponent->GetComponentLocation())))
+			{
+				closestGrabComponent = overlappingGrabComponent;
+			}
 		}
 	}
-	return nullptr;
+	return closestGrabComponent;
 }
 
-void AVR_MotionController::GrabActor(AVR_GrabbableActor* ActorToGrab, bool isLeftHand)
+void AVR_MotionController::GrabComponent(UVR_GrabComponent* ComponentToGrab, bool isLeftHand)
 {
-	if (ActorToGrab)
+	if (ComponentToGrab)
 	{
 		FName socket = isLeftHand ? "Grasp_Point_Inverted" : "Grasp_Point";
-		switch (ActorToGrab->GrabType)
+		switch (ComponentToGrab->GrabType)
 		{
 			case EVR_GrabType::VR_NULL :
 			{
 				break;
 			}
 			case EVR_GrabType::VR_FreeGrab :
-			{
-				ActorToGrab->AttachToComponent(HandMesh, FAttachmentTransformRules::KeepWorldTransform);
-				ActorToGrab->OnGrabbed();
-				HeldActor = ActorToGrab;
+			{				
+				ComponentToGrab->GetOwner()->AttachToComponent(HandMesh, FAttachmentTransformRules::KeepWorldTransform);
+				ComponentToGrab->OnVRGrabbed();
+				ComponentToGrab->bIsHeld = true;
+				HeldComponent = ComponentToGrab;
 				break;
 			}
 			case EVR_GrabType::VR_SnapToSocket :
-			{
-				ActorToGrab->AttachToComponent(HandMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, socket);
-				ActorToGrab->OnGrabbed();
-				HeldActor = ActorToGrab;
+			{				
+				ComponentToGrab->AttachComponentToSocket(HandMesh, "Grasp_Point");
+				ComponentToGrab->OnVRGrabbed();
+				ComponentToGrab->bIsHeld = true;				
+				HeldComponent = ComponentToGrab;
 				break;
 			}
 			case EVR_GrabType::VR_RestrictedGrab :
 			{
+				//TODO::
 				break;
 			}
 			default:
 				break;
 		}
-	}
+	}	
 }
 
-void AVR_MotionController::ReleaseActor()
+void AVR_MotionController::ReleaseComponent()
 {
-	if (HeldActor != nullptr)
+	if (HeldComponent != nullptr)
 	{
-		AVR_MotionController* parentActor = Cast<AVR_MotionController>(HeldActor->GetAttachParentActor());
+		// Get the actor that the HeldComponent's root actor is attached to (should be a motion controller)
+		AVR_MotionController* parentActor = Cast<AVR_MotionController>(HeldComponent->GetOwner()->GetAttachParentActor());
 		if (parentActor && parentActor == this)
-		{
-			HeldActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		{			
+			// HeldComponent->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+			HeldComponent->OnVRReleased();
+			HeldComponent->bIsHeld = false;
+			HeldComponent->GetOwner()->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		}
 	}
-	HeldActor = nullptr;
+	HeldComponent = nullptr;
 }

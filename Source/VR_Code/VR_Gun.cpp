@@ -16,7 +16,7 @@ AVR_Gun::AVR_Gun()
 	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>("SkeletalMesh");
 	SkeletalMesh->AttachToComponent(RootComponent,FAttachmentTransformRules::KeepRelativeTransform);
 
-	GrabType = EVR_GrabType::VR_SnapToSocket;
+	GrabType = EVR_GrabTypeB::VR_SnapToSocket;
 }
 
 
