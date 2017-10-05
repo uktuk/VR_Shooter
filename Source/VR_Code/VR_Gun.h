@@ -3,25 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "VR_GrabbableActor.h"
+#include "VR_GrabComponent.h"
 #include "VR_Gun.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class VR_CODE_API AVR_Gun : public AVR_GrabbableActor
+class VR_CODE_API AVR_Gun : public AActor
 {
 	GENERATED_BODY()
 	
 public:
 	AVR_Gun();
 
-	virtual void OnInteract_Implementation();
-
-	virtual void OnGrabbed_Implementation();
-
-	virtual void OnReleased_Implementation();
+	UFUNCTION(BlueprintCallable, Category="Default")
+	void Fire();
 	
 public:
 	USceneComponent* SceneComp;
@@ -33,6 +30,4 @@ public:
 	// Skeletal Mesh for the gun
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Mesh")
 	USkeletalMeshComponent* SkeletalMesh;
-
-	
 };

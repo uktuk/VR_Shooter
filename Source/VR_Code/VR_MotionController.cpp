@@ -15,34 +15,40 @@ AVR_MotionController::AVR_MotionController()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Create SceneComponent as root so the child components will translate relative to parent actor
-	VROrigin = CreateDefaultSubobject<USceneComponent>("SceneComponent");
-
 	// Create the MotionControllerComponents and attach to Root (this is what tracks the motion controllers)
 	MotionController = CreateDefaultSubobject<UMotionControllerComponent>("MotionController");
 	RootComponent = MotionController;
 
+	// Create SceneComponent as root so the child components will translate relative to parent actor
+	VROrigin = CreateDefaultSubobject<USceneComponent>("SceneComponent");
+	VROrigin->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+
 	// Creates Left Hand mesh
 	HandMesh = CreateDefaultSubobject<USkeletalMeshComponent>("HandMesh");
-	HandMesh->AttachToComponent(MotionController, FAttachmentTransformRules::KeepRelativeTransform);
+	HandMesh->AttachToComponent(VROrigin, FAttachmentTransformRules::KeepRelativeTransform);
 	
 	// Setup collision sphere
 	SphereComponent = CreateDefaultSubobject<USphereComponent>("SphereComponent");
 	SphereComponent->AttachToComponent(MotionController, FAttachmentTransformRules::KeepRelativeTransform);
-	
+
 	HeldComponent = nullptr;
 }
 
 // Called when the game starts or when spawned
 void AVR_MotionController::BeginPlay()
 {
-	Super::BeginPlay();	
+	Super::BeginPlay();
 }
 
 // Called every frame
 void AVR_MotionController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (HeldComponent)
+	{
+		HeldComponent->SetCurrentGrabbedHandTransform(MotionController->GetComponentTransform());
+	}
 }
 
 void AVR_MotionController::SetHand(EControllerHand hand)
@@ -50,7 +56,7 @@ void AVR_MotionController::SetHand(EControllerHand hand)
 	MotionController->Hand = hand;
 	if (hand == EControllerHand::Left)
 	{
-		HandMesh->SetWorldScale3D(FVector(1.0, 1.0, -1.0));
+		HandMesh->SetWorldScale3D(FVector(1.0, 1.0, -1.0));		
 	}
 }
 
@@ -106,23 +112,23 @@ void AVR_MotionController::GrabComponent(UVR_GrabComponent* ComponentToGrab, boo
 			}
 			case EVR_GrabType::VR_FreeGrab :
 			{				
-				ComponentToGrab->GetOwner()->AttachToComponent(HandMesh, FAttachmentTransformRules::KeepWorldTransform);
 				ComponentToGrab->OnVRGrabbed();
-				ComponentToGrab->bIsHeld = true;
+				ComponentToGrab->GetOwner()->AttachToComponent(HandMesh, FAttachmentTransformRules::KeepWorldTransform);
 				HeldComponent = ComponentToGrab;
 				break;
 			}
 			case EVR_GrabType::VR_SnapToSocket :
 			{				
-				ComponentToGrab->AttachComponentToSocket(HandMesh, "Grasp_Point");
-				ComponentToGrab->OnVRGrabbed();
-				ComponentToGrab->bIsHeld = true;				
+				ComponentToGrab->OnVRGrabbed();				
+				ComponentToGrab->AttachComponentToSocket(HandMesh, socket);
 				HeldComponent = ComponentToGrab;
 				break;
 			}
 			case EVR_GrabType::VR_RestrictedGrab :
 			{
-				//TODO::
+				ComponentToGrab->OnVRGrabbed();				
+				AttachHandToComponent(ComponentToGrab, GetHand());
+				HeldComponent = ComponentToGrab;
 				break;
 			}
 			default:
@@ -135,15 +141,66 @@ void AVR_MotionController::ReleaseComponent()
 {
 	if (HeldComponent != nullptr)
 	{
-		// Get the actor that the HeldComponent's root actor is attached to (should be a motion controller)
-		AVR_MotionController* parentActor = Cast<AVR_MotionController>(HeldComponent->GetOwner()->GetAttachParentActor());
-		if (parentActor && parentActor == this)
-		{			
-			// HeldComponent->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+		if (HeldComponent->GrabType == EVR_GrabType::VR_RestrictedGrab)
+		{
+			ReattachHandToMotionController();
 			HeldComponent->OnVRReleased();
 			HeldComponent->bIsHeld = false;
-			HeldComponent->GetOwner()->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		}
+		else
+		{
+			// Get the actor that the HeldComponent's root actor is attached to (should be a motion controller)
+			AVR_MotionController* parentActor = Cast<AVR_MotionController>(HeldComponent->GetOwner()->GetAttachParentActor());
+			if (parentActor && parentActor == this)
+			{			
+				HeldComponent->OnVRReleased();
+				HeldComponent->bIsHeld = false;
+				HeldComponent->GetOwner()->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+			}
 		}
 	}
 	HeldComponent = nullptr;
+}
+
+void AVR_MotionController::AttachHandToComponent(USceneComponent* parentComponent, EControllerHand HandType)
+{
+	if (parentComponent)
+	{
+		VROrigin->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+
+		FRotator parentComponentRotation = parentComponent->GetComponentRotation();
+
+		VROrigin->SetWorldRotation(parentComponent->GetComponentRotation());
+		VROrigin->SetWorldLocation(parentComponent->GetComponentLocation());
+
+		UVR_GrabComponent* parentGrabComponent = Cast<UVR_GrabComponent>(parentComponent);
+		if (parentGrabComponent)
+		{
+			switch (HandType)
+			{
+			case EControllerHand::Left:
+			{
+				VROrigin->AddLocalOffset(parentGrabComponent->AttachPointTransformForLeftHand.GetLocation() * parentGrabComponent->AttachPointTransformForRightHand.GetScale3D());
+				VROrigin->AddLocalRotation(parentGrabComponent->AttachPointTransformForLeftHand.GetRotation());
+				break;
+			}
+			case EControllerHand::Right:
+			{
+				VROrigin->AddLocalOffset(parentGrabComponent->AttachPointTransformForRightHand.GetLocation() * parentGrabComponent->AttachPointTransformForRightHand.GetScale3D());
+				
+				VROrigin->AddLocalRotation(parentGrabComponent->AttachPointTransformForRightHand.GetRotation());
+				break;			
+			}
+			default:
+				break;
+			}			
+		}
+		VROrigin->AttachToComponent(parentComponent, FAttachmentTransformRules::KeepWorldTransform);
+	}
+}
+
+void AVR_MotionController::ReattachHandToMotionController()
+{
+	VROrigin->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	VROrigin->AttachToComponent(RootComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);	
 }

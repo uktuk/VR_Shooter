@@ -23,7 +23,7 @@ class AVR_MotionController;
 /**
  * 
  */
-UCLASS(ClassGroup = "Custom", meta = (DisplayName = "Grab Collision", BlueprintSpawnableComponent))
+UCLASS(ClassGroup = "Custom", meta = (DisplayName = "Grab Component", BlueprintSpawnableComponent))
 class VR_CODE_API UVR_GrabComponent : public UCapsuleComponent
 {
 	GENERATED_BODY()
@@ -35,15 +35,37 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "VR Interaction")
 	EVR_GrabType GrabType;	
 
-	UPROPERTY(EditAnywhere, Category = "VR Interaction")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR Interaction")
 	bool bIsHeld;
 
 public:
+	void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) override;
+
 	void AttachComponentToSocket(USkeletalMeshComponent* motionController, FName socket);
 
-	inline void OnVRGrabbed() { OnVRGrabed_delegate.Broadcast(); }
-	inline void OnVRReleased() { OnVRReleased_delegate.Broadcast(); }
+	void UpdateHandTransform(FTransform newHandTransform);
+
+	UFUNCTION(BlueprintCallable, Category = "VR Interaction")
+	void SetCurrentGrabbedHandTransform(FTransform handTransform);
+
+	inline void OnVRGrabbed() { bIsHeld = true; OnVRGrabed_delegate.Broadcast(); }
+	inline void OnVRReleased() { bIsHeld = false; OnVRReleased_delegate.Broadcast(); }
 	inline void OnVRInteract() { OnVRInteract_delegate.Broadcast(); }
+
+	// Attach point for the Left hand (acts as a socket for the grab component)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "VR Interaction")
+	FTransform AttachPointTransformForLeftHand;
+
+	// Attach point for the Right hand (acts as a socket for the grab component)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VR Interaction")
+	FTransform AttachPointTransformForRightHand;	
+
+protected:
+	UPROPERTY(BlueprintReadOnly, Category = "VR Interaction")
+	FTransform LastGrabbedHandTransform;
+
+	UPROPERTY(BlueprintReadOnly, Category = "VR Interaction")
+	FTransform CurrentGrabbedHandTransform;
 
 private:
 	UPROPERTY(BlueprintAssignable, Category = "VR Interaction")
@@ -53,5 +75,5 @@ private:
 	FGrabComponentDelegate OnVRReleased_delegate;
 
 	UPROPERTY(BlueprintAssignable, Category = "VR Interaction")
-	FGrabComponentDelegate OnVRInteract_delegate;
+	FGrabComponentDelegate OnVRInteract_delegate;	
 };

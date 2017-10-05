@@ -45,6 +45,11 @@ public:
 	// Attempt to release held VR_GrabComponent
 	void ReleaseComponent();
 
+	// Detaches Mesh from MC and attaches to other actor. (used for restricted grab type)
+	void AttachHandToComponent(USceneComponent* parent, EControllerHand HandType);
+
+	void ReattachHandToMotionController();
+
 public:
 	// Skeletal Mesh for the hand
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "VR Meshes")
@@ -63,5 +68,5 @@ protected:
 
 	// Collision sphere component for grasping/punching
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "VR Interaction")
-	USphereComponent* SphereComponent;
+	USphereComponent* SphereComponent;	
 };

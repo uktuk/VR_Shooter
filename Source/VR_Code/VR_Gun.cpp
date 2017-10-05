@@ -3,7 +3,6 @@
 #include "VR_Gun.h"
 #include "Engine/Engine.h"
 #include <Runtime/Engine/Classes/Components/SkeletalMeshComponent.h>
-#include "VR_GrabbableActor.h"
 
 AVR_Gun::AVR_Gun()
 {
@@ -15,24 +14,13 @@ AVR_Gun::AVR_Gun()
 
 	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>("SkeletalMesh");
 	SkeletalMesh->AttachToComponent(RootComponent,FAttachmentTransformRules::KeepRelativeTransform);
-
-	GrabType = EVR_GrabTypeB::VR_SnapToSocket;
 }
 
-
- void AVR_Gun::OnInteract_Implementation()
- {
- 	 UWorld* const World = GetWorld();
- 	 if (World && ProjectileClass)
- 	 { 	 			
-		World->SpawnActor<AActor>(ProjectileClass, SkeletalMesh->GetSocketTransform("Muzzle"));		
- 	 }
- }
-
-void AVR_Gun::OnGrabbed_Implementation()
-{	
-}
-
-void AVR_Gun::OnReleased_Implementation()
+void AVR_Gun::Fire()
 {
+	UWorld* const World = GetWorld();
+	if (World && ProjectileClass)
+	{
+		World->SpawnActor<AActor>(ProjectileClass, SkeletalMesh->GetSocketTransform("Muzzle"));
+	}
 }
