@@ -43,10 +43,8 @@ public:
 
 	void AttachComponentToSocket(USkeletalMeshComponent* motionController, FName socket);
 
-	void UpdateHandTransform(FTransform newHandTransform);
-
 	UFUNCTION(BlueprintCallable, Category = "VR Interaction")
-	void SetCurrentGrabbedHandTransform(FTransform handTransform);
+	void UpdateHandTransform(FTransform newHandTransform);
 
 	inline void OnVRGrabbed() { bIsHeld = true; OnVRGrabed_delegate.Broadcast(); }
 	inline void OnVRReleased() { bIsHeld = false; OnVRReleased_delegate.Broadcast(); }

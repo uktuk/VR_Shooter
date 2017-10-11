@@ -41,9 +41,3 @@ void UVR_GrabComponent::UpdateHandTransform(FTransform newHandTransform)
 	LastGrabbedHandTransform = CurrentGrabbedHandTransform;
 	CurrentGrabbedHandTransform = newHandTransform;
 }
-
-void UVR_GrabComponent::SetCurrentGrabbedHandTransform(FTransform handTransform)
-{
-	LastGrabbedHandTransform = CurrentGrabbedHandTransform;
-	CurrentGrabbedHandTransform = handTransform;
-}

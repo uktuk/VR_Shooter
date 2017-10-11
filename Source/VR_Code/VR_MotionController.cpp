@@ -47,7 +47,7 @@ void AVR_MotionController::Tick(float DeltaTime)
 
 	if (HeldComponent)
 	{
-		HeldComponent->SetCurrentGrabbedHandTransform(MotionController->GetComponentTransform());
+		HeldComponent->UpdateHandTransform(MotionController->GetComponentTransform());
 	}
 }
 
